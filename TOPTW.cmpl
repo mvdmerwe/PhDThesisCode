@@ -1,0 +1,59 @@
+%data toptw.dat: N, P, DataFile, TravelTime, EdgeSet set[2]
+
+parameters:
+N1 := N-1; 
+
+# Read Data
+temp[ , ] := readcsv(DataFile);
+t[,] :=readcsv(TravelTime);
+
+# Parse Imported Data
+{i in 1..N:
+xp[i] := temp[i+1, 2];
+yp[i] := temp[i+1, 3];
+a[i] := temp[i+1, 4];
+S[i] := temp[i+1, 5];
+O[i] := temp[i+1, 6];
+C[i] := temp[i+1, 7];
+}
+
+Tmax := temp[2,7];
+M := max(C[]) + max(t[,]) + max(a[]) - min(O[]);
+
+variables:
+y[2..N1]:binary;
+s[1..N]:real;
+x[EdgeSet]:binary;
+
+objectives:
+sum{i in 2..N1 : S[i]*y[i]} -> max;
+
+constraints:
+start: sum{ [i,j] in EdgeSet : sum{i = 1 : x [i,j] | default : 0} } <= P;
+end:   sum{ [i,j] in EdgeSet : sum{j = N : x [i,j] | default : 0}} <= P;
+
+sum{ [i,j] in EdgeSet : sum{i = 1 : x [i,j] | default : 0} } = sum{ [i,j] in EdgeSet : sum{j = N : x [i,j] | default : 0}};
+
+{k in 2..N1 :
+sum{[i,j] in EdgeSet: sum{j = k : x [i,k] | default : 0}} = y[k];
+sum{[i,j] in EdgeSet: sum{i = k : x [k,j] | default : 0}} = y[k];
+}
+
+{ [i,j] in EdgeSet:
+s[i] + t[i,j]+ a[i] - s[j] <= M - M * x[i,j];
+}
+
+sum{i in 2..N1: y[i] * a[i]} + sum{[i,j] in EdgeSet: t[i,j] * x[i,j]} <= Tmax * P;
+
+{ i in 1..N:
+O[i] <= s[i];
+s[i] <= C[i];
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
