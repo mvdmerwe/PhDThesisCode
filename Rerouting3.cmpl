@@ -1,0 +1,146 @@
+#Two stage stochastic linear program
+%data ReroutingDisrupted.dat: DataFile, TravelTime, VehicleProperties, Pbar, EdgeSet set[3], VehicleSet set
+
+parameters:
+#Read Data
+# i,j Location indices
+# p - Vehicle index
+# u - capability index
+
+temp[ , ] := readcsv(DataFile);
+vehicleProp[,] := readcsv(VehicleProperties);
+tempx[ , ] := readcsv('oldx.csv');
+
+t[,] := readcsv(TravelTime);
+N := integer(temp[1,1]);
+U := vehicleProp[1,2];
+numDepots := integer(temp[1,4]);
+P := integer(vehicleProp[1,1]);
+Broken := P;
+{i in VehicleSet:
+Broken := Broken - 1;
+}
+
+#Define some useful sets
+DepotSet := 1..numDepots;
+AssetSet := numDepots+1..N-1;
+
+{p in VehicleSet:
+	{u in 1..U:
+		capa[p,u] := vehicleProp[1+u,p];
+	}	
+	startT[p] := vehicleProp[U+2,p];
+}
+
+{i in DepotSet, p in VehicleSet:
+start[i,p] := 0;
+}
+{p in VehicleSet:
+start[startT[p],p]  := 1;
+}
+
+echo "N = " + N  + ",P = " + P  + "U = " + U + ",n =" + numDepots + ", Broken = " + Broken;
+
+#Parse imported data
+{i in 1..N:
+xp[i] := temp[i+1, 2];
+yp[i] := temp[i+1, 3];
+a[i] := temp[i+1, 4];
+v[i] := temp[i+1, 5];
+o[i] := temp[i+1, 6];
+c[i] := temp[i+1, 7];
+}
+
+
+Tmax := temp[2,7];
+M := max(c[]) + max(t[,]) + max(a[]) - min(o[]);
+
+N1 := N-1; 
+
+{ i in AssetSet,u in 1..U:
+r[i,u] := temp[i+1,7+u];
+#echo "r[" + i + "," + u + "]: " + r[i,u]; 
+}
+
+{i in 1..N1, j in 1..N, p in 1..P:
+x[i,j,p] := tempx[i,(p-1)*N+j];
+}
+
+NP := N*(P-Broken);
+Pfac := 1/NP;
+
+variables:
+S[1..N]:real;
+X[EdgeSet]:binary;
+Y[1..N]:binary;
+Zadd[1..N,VehicleSet]:binary;
+Zremove[1..N,VehicleSet]:binary;
+
+objectives:
+sum{i in AssetSet : v[i]*Y[i]} -  sum{j in 1..N, p in VehicleSet : Pfac * Zadd[j,p] + Pfac * Zremove[j,p]}   -> max;
+
+constraints:
+
+{ k in DepotSet, qone in VehicleSet:
+sum{ [i,j,qtwo] in EdgeSet : sum{i = k && qtwo = qone : X[i,j,qtwo] | default : 0} } = start[k,qone]; #(2)
+}
+end: sum{[i,j,p] in EdgeSet: sum{j = N: X[i,j,p] | default : 0}  } = P-Broken;
+
+
+
+{k in AssetSet, pone in VehicleSet:
+sum{[i,j,ptwo] in EdgeSet : sum{j = k && ptwo = pone  : X[i,k,ptwo] | default : 0} } = sum{[i,j,ptwo] in EdgeSet : sum{i = k && ptwo = pone : X[k,j,ptwo] | default : 0} } ; # (4)
+}
+
+
+#Protection constraints
+{k in AssetSet, u in 1..U:
+protection: sum{ [i,j,p] in EdgeSet: sum{ j = k : X[i,k,p] * capa[p,u] | default : 0}}   >= r[k,u] * Y[k] ; #(5)
+}
+
+{[i,j,p] in EdgeSet:
+S[i] + t[i,j] + a[i] - S[j] <= M - M * X[i,j,p];
+}
+
+{ i in AssetSet:
+o[i]  - S[i] <= M - M * Y[i];
+S[i] - c[i] <= M - M * Y[i];
+}
+
+{i in DepotSet:
+S[i] = 0;
+}
+S[N] = Tmax;
+
+
+{pone in VehicleSet:
+sum{[i,j,p] in EdgeSet: sum{p = pone: X[i,j,p] * a[i]+ t[i,j] * X[i,j,p] | default: 0 } } <= Tmax;
+}
+ 
+sum{p in VehicleSet, j in 1..N : Zadd[j,p] + Zremove[j,p]} <= Pbar;
+
+
+{j in 1..N, p in VehicleSet:
+sum{ [i, jtwo, ptwo] in EdgeSet: sum{jtwo = j && ptwo = p: X[i,j,p] - x[i,j,p] | default: 0} } = Zadd[j,p] - Zremove[j,p];
+
+#Z[j,p] <= 1;
+#0 <= Z[j,p];
+}
+
+
+ #{i in DepotSet, p in 1..P:
+#echo "start[" + i +","+ p + "] = " + start[i,p];
+#}
+
+# {q in 1..Q, u in 1..U:
+# echo "capa[" + q + "," + u + "]: " + capa[q,u]; 
+# }
+ 
+#Display read  data
+# {i in DepotSet:
+# echo i + "- depot x:" + xp[i] + " y:" + yp[i] + " " + a[i] + " " + S[i] + " " + O[i] + " " + C[i] ; 
+# }
+# {i in AssetSet:
+# echo i + "- asset x:" + xp[i] + " y:" + yp[i] + " " + a[i] + " " + S[i] + " " + O[i] + " " + C[i] ; 
+# }
+# echo N + "- sink x:" + xp[N] + " y:" + yp[N] + " " + a[N] + " " + S[N] + " " + O[N] + " " + C[N] ; 

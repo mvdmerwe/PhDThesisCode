@@ -1,0 +1,68 @@
+#  %arg -solver cplex
+%data ctop.dat: N, P, DataFile, TravelTime, EdgeSet set[2]
+
+parameters:
+N1 := N-1; 
+
+#Read Data
+temp[ , ] := readcsv(DataFile);
+t[,] := readcsv(TravelTime);
+
+#Parse imported data
+{i in 1..N:
+xp[i] := temp[i+1, 2];
+yp[i] := temp[i+1, 3];
+a[i] := temp[i+1, 4];
+S[i] := temp[i+1, 5];
+O[i] := temp[i+1, 6];
+C[i] := temp[i+1, 7];
+r[i] := temp[i+1,8];
+}
+
+Tmax := temp[2,7];
+M := max(C[]) + max(t[,]) + max(a[]) - min(O[]);
+
+echo "Tmax: " + Tmax + ", M: " + M;
+
+
+variables:
+y[2..N1]:binary;
+s[1..N]:real;
+x[EdgeSet]:integer;
+z[EdgeSet]:binary;
+
+objectives:
+sum{i in 2..N1 : S[i]*y[i]} -> max;
+
+constraints:
+start: sum{ [i,j] in EdgeSet : sum{i = 1 : x [i,j] | default : 0} } = P;
+end: sum{ [i,j] in EdgeSet : sum{j = N : x [i,j] | default : 0}} = P;
+
+{k in 2..N1:
+sum{[i,j] in EdgeSet : sum{j = k  : x [i,k] | default : 0} } = sum{[i,j] in EdgeSet : sum{i = k  : x [k,j] | default : 0} } ;
+}
+
+#Testing this constraint with = instead of <=
+{k in 2..N1:
+r[k] * y[k] = sum{[i,j] in EdgeSet: sum{ j = k : x[i,k] | default : 0}};
+}
+
+{ [i,j] in EdgeSet:
+x[i,j] <= M *z[i,j];
+s[i] + t[i,j] + a[i] - s[j] <= M - M * z[i,j];
+}
+
+{ i in 1..N, p in 1..P:
+O[i] <= s[i];
+s[i] <= C[i];
+}
+
+{[i,j] in EdgeSet:
+x[i,j] >= 0;
+x[i,j] <= P;
+}
+
+s[1] = O[1];
+s[N] = C[N];
+
+
