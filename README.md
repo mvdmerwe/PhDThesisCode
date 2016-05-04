@@ -39,6 +39,9 @@ Stochastic.csv | Data used for the stochastic model demonstration in Chapter 6.
 VehicleProperties.csv | The vehicle capabilities and starting position data file used in Chapters 5 and 6. 
 
 ### Algorithms
+
+Filename | Description
+--------|---------------------------------------------------
 GA_COPTW.m | Genetic algorithm for the cooperative orienteering problem
 
 ### Scripts
