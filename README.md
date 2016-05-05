@@ -37,6 +37,8 @@ Rerouting1.csv | Pre-disruption data used for the rerouting model demonstration 
 Rerouting2.csv | Post-disruption data used for the rerouting model demonstration in Chapter 5.
 Stochastic.csv | Data used for the stochastic model demonstration in Chapter 6.
 VehicleProperties.csv | The vehicle capabilities and starting position data file used in Chapters 5 and 6. 
+COPBechmarks.zip | COPTW benchmark instances used for computational testing in Chapter 3.
+MRBenchmarks.zip | Benchmarks used for computational testing of the Asset Protection model in Chapter 4.
 
 ### Algorithms
 
