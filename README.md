@@ -29,7 +29,7 @@ SP.m | Stochastic model formulation in Maltab's m-file format.
 TOPTW.cmpl | Traditional formulation for the team orienteering problem with time windows in CMPL format.
 TOPTWnew.cmpl | New formulation for the team orienteering problem with time windows presented in Chapter 3.   
 
-### Data files
+### Data and benchmarks
 
 Filename | Description
 --------|---------------------------------------------------
@@ -39,6 +39,7 @@ Stochastic.csv | Data used for the stochastic model demonstration in Chapter 6.
 VehicleProperties.csv | The vehicle capabilities and starting position data file used in Chapters 5 and 6. 
 COPBechmarks.zip | COPTW benchmark instances used for computational testing in Chapter 3.
 MRBenchmarks.zip | Benchmarks used for computational testing of the Asset Protection model in Chapter 4.
+UniformBenchmarks.zip | Benchmark instances with spacially uniform locations as used in Chapter 4 for computational testing.
 
 ### Algorithms
 
